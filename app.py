@@ -492,4 +492,6 @@ html_code = f"""
 </body>
 </html>
 """
+st.write("DEBUG NM payout keys:", ...)
+st.write("DEBUG N3 payout keys:", ...)
 components.html(html_code, height=610, scrolling=False)
