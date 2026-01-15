@@ -46,7 +46,7 @@ def parse_month_page(month_url: str, digits: int) -> list[dict]:
             ntxt = None
             payout = {}  # optional: STR/BOX/SET-S/SET-B
             # scan nearby
-            for j in range(i, min(i + 70, len(lines) - 1)):
+            for j in range(i, min(i + 140, len(lines) - 1)):
                 if lines[j] in ("抽せん日", "抽選日") and j + 1 < len(lines):
                     dtxt = lines[j + 1]
                 if lines[j] in ("当せん番号", "当選番号") and j + 1 < len(lines):
