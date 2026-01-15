@@ -65,7 +65,7 @@ def parse_month_page(month_url: str, digits: int) -> list[dict]:
                 # Numbers3 ミニ（表記ゆらぎ対策）
                 if ("ミニ" in lines[j]) and (j + 2 < len(lines)):
                     payout["MINI"] = {"kuchi": lines[j + 1], "yen": lines[j + 2]}
-
+                payout["_CHECK_MINI_"] = {"yen": "ミニ処理まで来た"}
                 if dtxt and ntxt:
                     # don't break early because payouts might be slightly later,
                     # but stop if we already passed some payout lines and see next block.
