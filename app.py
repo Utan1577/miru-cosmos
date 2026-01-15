@@ -376,7 +376,7 @@ html_code = f"""
       h+=`<div class="result-spacer"></div>`;
 
       if(curG==='NM'){{
-        const miniY=payoutYen(pay,"MINI") || payoutYen(pay,"Mini") || payoutYen(pay,"ミニ") || payoutYen(pay,"STR");
+        const miniY=payoutYen(pay,"MINI") || payoutYen(pay,"Mini") || payoutYen(pay,"ミニ") || "—";
         h+=`<div class="payout-row"><span class="payout-k">Mini</span><span class="payout-v">${{escHtml(miniY)}}</span></div>`;
         return h;
       }}
