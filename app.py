@@ -491,6 +491,5 @@ html_code = f"""
 </body>
 </html>
 """
-st.write("DEBUG NM payout keys:", list((data_for_js["NM"][1].get("payout") or {}).keys()))
-st.write("DEBUG N3 payout keys:", list((data_for_js["N3"][1].get("payout") or {}).keys()))
+
 components.html(html_code, height=610, scrolling=False)
