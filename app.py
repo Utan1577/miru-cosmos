@@ -471,11 +471,13 @@ html_code = f"""
       if(page.mode==='NOW') lcd.classList.add('mode-now');
       else lcd.classList.remove('mode-now');
 
-      document.getElementById('game-label').innerText =
-        (page.mode==='NOW'
-          ? 第'+page.round+'回 予想'
-          : 'BACK ('+curG+')');
-
+    const gl = document.getElementById('game-label');
+      if(gl){
+        gl.innerText =
+          (page.mode==='NOW'
+            ? '第'+page.round+'回予想'
+            : 'BACK ('+curG+')');
+    }
       if(page.mode==='NOW') {{
         document.getElementById('result-box').innerHTML='';
       }} else {{
