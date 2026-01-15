@@ -63,8 +63,16 @@ def parse_month_page(month_url: str, digits: int) -> list[dict]:
                 if lines[j].startswith("セット（ボックス）") and j + 2 < len(lines):
                     payout["SET-B"] = {"kuchi": lines[j + 1], "yen": lines[j + 2]}
                 # Numbers3 ミニ（表記ゆらぎ対策）
-                if (digits == 3) and (lines[j] == "ミニ") and (j + 2 < len(lines)):
-                    payout["MINI"] = {"kuchi": lines[j + 1], "yen": lines[j + 2]}
+                if (digits == 3) and (lines[j] == "ミニ"):
+                    kuchi = ""
+                    yen = ""
+                    for k in range(j + 1, min(j + 12, len(lines))):
+                        if (not kuchi) and lines[k].endswith("口"):
+                            kuchi = lines[k]
+                        if (not yen) and lines[k].endswith("円"):
+                            yen = lines[k]
+                    if kuchi and yen:
+                        payout["MINI"] = {"kuchi": kuchi, "yen": yen}
                 if dtxt and ntxt:
                     # don't break early because payouts might be slightly later,
                     # but stop if we already passed some payout lines and see next block.
