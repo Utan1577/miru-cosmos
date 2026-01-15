@@ -106,20 +106,44 @@ def _parse_ts4_mini_map() -> dict[int, dict]:
     r.raise_for_status()
     r.encoding = r.apparent_encoding or "utf-8"
     soup = BeautifulSoup(r.text, "html.parser")
-    txt = soup.get_text("\n", strip=True).replace("\u3000", " ")
 
-    # ページ内の「第xxxx回」の位置を全部拾って、次の回までを1ブロックとして切る
-    headers = [(int(m.group(1)), m.start()) for m in re.finditer(r"第(\d+)回", txt)]
+    # 文字を「部品（トークン）」として拾う。get_textより崩れに強い
+    toks = [s.replace("\u3000", " ").strip() for s in soup.stripped_strings]
+    toks = [t for t in toks if t]
+
     mini_map: dict[int, dict] = {}
 
-    for idx, (rno, start) in enumerate(headers):
-        end = headers[idx + 1][1] if idx + 1 < len(headers) else len(txt)
-        blk = txt[start:end]
+    cur_round = None
+    i = 0
+    while i < len(toks):
+        t = toks[i]
 
-        # ブロック内の「ミニ 891口 7,600円」（改行/カンマ/空白混在OK）
-        m = re.search(r"ミニ[^0-9]*([0-9,]+口)[^0-9]*([0-9,]+円)", blk, flags=re.DOTALL)
+        # 第6898回 を拾う
+        m = re.search(r"第(\d+)回", t)
         if m:
-            mini_map[rno] = {"kuchi": m.group(1), "yen": m.group(2)}
+            cur_round = int(m.group(1))
+
+        # ミニ を拾ったら、その近くから「口」「円」を探す
+        if cur_round is not None and "ミニ" in t:
+            kuchi = ""
+            yen = ""
+            # 近傍を少し広めに見る
+            for k in range(i, min(i + 60, len(toks))):
+                if (not kuchi) and re.fullmatch(r"[0-9,]+口", toks[k]):
+                    kuchi = toks[k]
+                if (not yen) and re.fullmatch(r"[0-9,]+円", toks[k]):
+                    yen = toks[k]
+                # 「7,600」「円」みたいに分割されるパターンも拾う
+                if (not yen) and re.fullmatch(r"[0-9,]+", toks[k]) and (k + 1 < len(toks)) and toks[k + 1] == "円":
+                    yen = toks[k] + "円"
+                if (not kuchi) and re.fullmatch(r"[0-9,]+", toks[k]) and (k + 1 < len(toks)) and toks[k + 1] == "口":
+                    kuchi = toks[k] + "口"
+
+                if kuchi and yen:
+                    mini_map[cur_round] = {"kuchi": kuchi, "yen": yen}
+                    break
+
+        i += 1
 
     return mini_map
 
