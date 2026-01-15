@@ -106,18 +106,17 @@ def _parse_ts4_mini_map() -> dict[int, dict]:
     r.raise_for_status()
     r.encoding = r.apparent_encoding or "utf-8"
     soup = BeautifulSoup(r.text, "html.parser")
-    txt = soup.get_text("\n", strip=True)
+    txt = soup.get_text("\n", strip=True).replace("\u3000", " ")
 
-    parts = re.split(r"####\s+第(\d+)回ナンバーズ当選番号", txt)
-
+    # ページ内の「第xxxx回」の位置を全部拾って、次の回までを1ブロックとして切る
+    headers = [(int(m.group(1)), m.start()) for m in re.finditer(r"第(\d+)回", txt)]
     mini_map: dict[int, dict] = {}
-    it = iter(parts[1:])
-    for rno_str, blk in zip(it, it):
-        try:
-            rno = int(rno_str)
-        except:
-            continue
 
+    for idx, (rno, start) in enumerate(headers):
+        end = headers[idx + 1][1] if idx + 1 < len(headers) else len(txt)
+        blk = txt[start:end]
+
+        # ブロック内の「ミニ 891口 7,600円」（改行/カンマ/空白混在OK）
         m = re.search(r"ミニ[^0-9]*([0-9,]+口)[^0-9]*([0-9,]+円)", blk, flags=re.DOTALL)
         if m:
             mini_map[rno] = {"kuchi": m.group(1), "yen": m.group(2)}
