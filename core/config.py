@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-STATUS_FILE = "miru_status.json"
+STATUS_FILE = "data/miru_preds.json"
 JST = timezone(timedelta(hours=9), "JST")
 
 # --- UI/HTTP headers ---
