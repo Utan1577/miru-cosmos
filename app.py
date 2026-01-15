@@ -471,7 +471,7 @@ html_code = f"""
       if(page.mode==='NOW') lcd.classList.add('mode-now');
       else lcd.classList.remove('mode-now');
 
-    document.getElementById('game-label').innerText = '第'+page.round+'回予想';
+    document.getElementById('game-label').innerText = '第'+page.round+'回 予想';
       if(page.mode==='NOW') {{
         document.getElementById('result-box').innerHTML='';
       }} else {{
