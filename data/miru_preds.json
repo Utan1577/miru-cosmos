@@ -1,0 +1,9 @@
+{
+  "games": {
+    "N4": { "preds_by_round": {}, "history_limit": 120 },
+    "N3": { "preds_by_round": {}, "history_limit": 120 },
+    "NM": { "preds_by_round": {}, "history_limit": 120 },
+    "KC": { "preds_by_round": {}, "history_limit": 120 }
+  },
+  "updated_at": ""
+}
