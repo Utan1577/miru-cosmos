@@ -385,10 +385,13 @@ html_code = f"""
       const boxY=payoutYen(pay,"BOX");
       const ssY=payoutYen(pay,"SET-S");
       const sbY=payoutYen(pay,"SET-B");
+      const miniY=payoutYen(pay,"MINI") || payoutYen(pay,"Mini") || payoutYen(pay,"ミニ");
       if(strY) h+=`<div class="payout-row"><span class="payout-k">STR</span><span class="payout-v">${{escHtml(strY)}}</span></div>`;
       if(boxY) h+=`<div class="payout-row"><span class="payout-k">BOX</span><span class="payout-v">${{escHtml(boxY)}}</span></div>`;
       if(ssY)  h+=`<div class="payout-row"><span class="payout-k">S-S</span><span class="payout-v">${{escHtml(ssY)}}</span></div>`;
       if(sbY)  h+=`<div class="payout-row"><span class="payout-k">S-B</span><span class="payout-v">${{escHtml(sbY)}}</span></div>`;
+      if(curG==='N3')
+               h+=`<div class="payout-row"><span class="payout-k">Mini</span><span class="payout-v">${{escHtml(miniY || "—")}}</span></div>`;
 
       if(curG==='N4' || curG==='N3'){{
         h+=`<div class="legend">🟥BX&nbsp;&nbsp;🟦STR</div>`;
