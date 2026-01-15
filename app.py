@@ -472,7 +472,7 @@ html_code = f"""
       else lcd.classList.remove('mode-now');
 
     const gl = document.getElementById('game-label');
-      if(gl){
+    if(gl){
         gl.innerText =
           (page.mode==='NOW'
             ? '第'+page.round+'回予想'
