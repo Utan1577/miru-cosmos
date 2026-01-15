@@ -471,7 +471,10 @@ html_code = f"""
       if(page.mode==='NOW') lcd.classList.add('mode-now');
       else lcd.classList.remove('mode-now');
 
-      document.getElementById('game-label').innerText = (page.mode==='NOW' ? 'NOW ('+curG+')' : 'BACK ('+curG+')');
+      document.getElementById('game-label').innerText =
+        (page.mode==='NOW'
+          ? 'NOW ('+curG+')｜第'+page.round+'回'
+          : 'BACK ('+curG+')');
 
       if(page.mode==='NOW') {{
         document.getElementById('result-box').innerHTML='';
