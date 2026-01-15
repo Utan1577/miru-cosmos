@@ -473,7 +473,7 @@ html_code = f"""
 
       document.getElementById('game-label').innerText =
         (page.mode==='NOW'
-          ? 'NOW ('+curG+')｜第'+page.round+'回'
+          ? 第'+page.round+'回 予想'
           : 'BACK ('+curG+')');
 
       if(page.mode==='NOW') {{
