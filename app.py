@@ -545,11 +545,11 @@ else lcd.classList.remove('mode-now');
 
 if (page.mode === 'NOW') {
   document.getElementById('game-label').innerText =
-    `第${page.round}回 予想`;
+    `第${{page.round}}回 予想`;
   document.getElementById('result-box').innerHTML = '';
 } else {
   document.getElementById('game-label').innerText =
-    `BACK (${curG})`;
+    `BACK (${{curG}})`;
   document.getElementById('result-box').innerHTML =
     renderResultPanel(page);
 }
