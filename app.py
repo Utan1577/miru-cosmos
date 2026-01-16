@@ -13,6 +13,7 @@ import streamlit.components.v1 as components
 from core.config import STATUS_FILE, JST, HEADERS
 from core.fetch import fetch_last_n_results
 from core.model import calc_trends_from_history, generate_predictions, kc_random_10
+from core.mini import nm_drift_unique
 
 # =========================
 # MIRU-PAD (RAKUTEN ONLY / AUTO / BACK-NEXT-NOW)
@@ -227,7 +228,7 @@ for p in n3_pages:
             "date": "",
             "result": "",
             "payout": p.get("payout", {}) or {},
-            "preds": [x[-2:] for x in p["preds"]],
+            "preds": nm_drift_unique([x[-2:] for x in p["preds"]]),
             "months_used": p.get("months_used", [])
         })
     else:
@@ -237,7 +238,7 @@ for p in n3_pages:
             "date": p["date"],
             "result": (p["result"][-2:] if p["result"] else ""),
             "payout": p.get("payout", {}) or {},
-            "preds": [x[-2:] for x in p["preds"]],
+            "preds": nm_drift_unique([x[-2:] for x in p["preds"]]),
             "months_used": p.get("months_used", [])
         })
 
