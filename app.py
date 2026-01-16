@@ -263,7 +263,7 @@ data_for_js = {
 # ------------------------------------------------------------
 # UI (NOW: result hide + preds centered, BACK: centered, win number black bigger)
 # ------------------------------------------------------------
-html_code = """
+html_code = f"""
 <!DOCTYPE html>
 <html>
 <head>
@@ -545,7 +545,7 @@ else lcd.classList.remove('mode-now');
 
 if (page.mode === 'NOW') {
   document.getElementById('game-label').innerText =
-    '第' + page.round + '回 予想';
+  '第' + page.round + '回 予想';
   document.getElementById('result-box').innerHTML = '';
 } else {
   document.getElementById('game-label').innerText =
