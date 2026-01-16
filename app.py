@@ -540,27 +540,32 @@ html_code = f"""
       if(!page) return;
 
       const lcd=document.getElementById('lcd');
-      if(page.mode==='NOW') lcd.classList.add('mode-now');
-      else lcd.classList.remove('mode-now');
+if(page.mode==='NOW') lcd.classList.add('mode-now');
+else lcd.classList.remove('mode-now');
 
-      document.getElementById('game-label').innerText = (page.mode==='NOW' ? 'NOW ('+curG+')' : 'BACK ('+curG+')');
+if (page.mode === 'NOW') {
+  document.getElementById('game-label').innerText =
+    `第${page.round}回 予想`;
+  document.getElementById('result-box').innerHTML = '';
+} else {
+  document.getElementById('game-label').innerText =
+    `BACK (${curG})`;
+  document.getElementById('result-box').innerHTML =
+    renderResultPanel(page);
+}
 
-      if(page.mode==='NOW') {{
-        document.getElementById('result-box').innerHTML='';
-      }} else {{
-        document.getElementById('result-box').innerHTML=renderResultPanel(page);
-      }}
-      document.getElementById('preds-box').innerHTML=renderPredPanel(page);
-    }}
+document.getElementById('preds-box').innerHTML =
+  renderPredPanel(page);
+}
 
-    function changeCount(v){{ curC=Math.max(1,Math.min(10,curC+v)); update(); }}
-    function setG(g){{ curG=g; if(!pagesByGame[curG]) pagesByGame[curG]=[{{mode:'NOW',round:0,date:'',result:'',payout:{{}},preds:Array(10).fill('COMING SOON')}}]; cursor[curG]=0; update(); }}
-    function navBack(){{ const arr=pagesByGame[curG]||[]; cursor[curG]=Math.min((cursor[curG]||0)+1, Math.max(0,arr.length-1)); update(); }}
-    function navNext(){{ cursor[curG]=Math.max((cursor[curG]||0)-1,0); update(); }}
-    function navNow(){{ cursor[curG]=0; update(); }}
+function changeCount(v){{ curC=Math.max(1,Math.min(10,curC+v)); update(); }}
+function setG(g){{ curG=g; if(!pagesByGame[curG]) pagesByGame[curG]=[{{mode:'NOW',round:0,date:'',result:'',payout:{{}},preds:Array(10).fill('COMING SOON')}}]; cursor[curG]=0; update(); }}
+function navBack(){{ const arr=pagesByGame[curG]||[]; cursor[curG]=Math.min((cursor[curG]||0)+1, Math.max(0,arr.length-1)); update(); }}
+function navNext(){{ cursor[curG]=Math.max((cursor[curG]||0)-1,0); update(); }}
+function navNow(){{ cursor[curG]=0; update(); }}
 
-    update();
-  </script>
+update();
+</script>
 </body>
 </html>
 """
