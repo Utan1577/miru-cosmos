@@ -546,7 +546,8 @@ html_code = f"""
       document.getElementById('game-label').innerText = (page.mode==='NOW' ? 'NOW ('+curG+')' : 'BACK ('+curG+')');
 
       if(page.mode==='NOW') {{
-        document.getElementById('result-box').innerHTML='';
+        document.getElementById('game-label').innerText =
+          '第' + String(page.round) + '回 予想';
       }} else {{
         document.getElementById('result-box').innerHTML=renderResultPanel(page);
       }}
