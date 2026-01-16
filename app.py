@@ -93,6 +93,20 @@ def ensure_predictions_for_round(game: str, round_no: int, base_last: str, base_
     return preds
 
 def build_pages_for_game(game: str, items: list[dict], months_used: list[int]) -> dict:
+    # ★ items が空なら落とさない
+    if not items:
+        return {
+            "pages": [{
+                "mode": "NOW",
+                "round": 0,
+                "date": "",
+                "result": "",
+                "payout": {},
+                "preds": ["NO DATA"] * 10,
+                "months_used": months_used
+            }]
+        }
+
     latest = items[0]
     latest_round = latest["round"]
     next_round = latest_round + 1
