@@ -263,7 +263,7 @@ data_for_js = {
 # ------------------------------------------------------------
 # UI (NOW: result hide + preds centered, BACK: centered, win number black bigger)
 # ------------------------------------------------------------
-html_code = f"""
+html_code = """
 <!DOCTYPE html>
 <html>
 <head>
