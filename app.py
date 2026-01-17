@@ -406,7 +406,8 @@ html_code = f"""
     let curG='N4';
     let curC=10;
     const cursor={{'N4':0,'N3':0,'NM':0,'KC':0,'L7':0,'L6':0,'ML':0,'B5':0}};
-
+    let viewRound = null;     // いま見ている回号（全ゲーム共通）
+    let viewMode  = 'NOW';    // 'NOW' or 'BACK'
     function escHtml(s){{
       return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
     }}
@@ -421,6 +422,26 @@ html_code = f"""
       const arr=pagesByGame[curG]||[];
       const idx=Math.max(0, Math.min(arr.length-1, cursor[curG]||0));
       return arr[idx]||null;
+    }}
+
+    function findIndexByRound(game, roundNo){{
+      const arr = pagesByGame[game] || [];
+      if(arr.length === 0) return 0;
+      if(roundNo === null || roundNo === undefined) return 0;
+
+      let bestIdx = 0;
+      let bestDiff = 1e18;
+
+      for(let i=0;i<arr.length;i++) {{
+        const r = arr[i] && (arr[i].round||0);
+        const diff = Math.abs((r||0) - roundNo);
+        if(diff < bestDiff) {{
+          bestDiff = diff;
+          bestIdx = i;
+          if(diff === 0) break;
+        }}
+      }}
+      return bestIdx;
     }}
 
     function payoutYen(payout,key){{
@@ -519,6 +540,8 @@ html_code = f"""
 
     function renderPredPanel(page){{
       if(!page) return "";
+      viewRound = page.round || viewRound;
+      viewMode  = (page.mode==='NOW' ? 'NOW' : 'BACK');
       const preds=page.preds||[];
       const res=page.result||"";
       let h='<div class="preds-grid">';
@@ -556,7 +579,24 @@ html_code = f"""
     }}
 
     function changeCount(v){{ curC=Math.max(1,Math.min(10,curC+v)); update(); }}
-    function setG(g){{ curG=g; if(!pagesByGame[curG]) pagesByGame[curG]=[{{mode:'NOW',round:0,date:'',result:'',payout:{{}},preds:Array(10).fill('COMING SOON')}}]; update(); }}
+    function setG(g){{
+      curG = g;
+
+      if(!pagesByGame[curG]) {{
+        pagesByGame[curG] = [{{mode:'NOW',round:0,date:'',result:'',payout:{{}},preds:Array(10).fill('COMING SOON')}}];
+      }}
+
+      // NOW/BACKを勝手に戻さず「今見ている回号」を優先してカーソルを合わせる
+      if(viewMode === 'NOW') {{
+        // NOWのときだけは各ゲームのNOW(0)でOK
+        cursor[curG] = 0;
+      }} else {{
+        // BACKのときは同じroundを探してそこへ
+        cursor[curG] = findIndexByRound(curG, viewRound);
+      }}
+
+      update();
+    }}
     function navBack(){{ const arr=pagesByGame[curG]||[]; cursor[curG]=Math.min((cursor[curG]||0)+1, Math.max(0,arr.length-1)); update(); }}
     function navNext(){{ cursor[curG]=Math.max((cursor[curG]||0)-1,0); update(); }}
     function navNow(){{ cursor[curG]=0; update(); }}
