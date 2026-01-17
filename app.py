@@ -12,7 +12,7 @@ import streamlit.components.v1 as components
 
 from core.config import STATUS_FILE, JST, HEADERS
 from core.fetch import fetch_last_n_results
-from core.model import calc_trends_from_history, generate_predictions, kc_random_10
+from core.model import calc_trends_from_history, generate_predictions, kc_random_10, load_pred_store, save_pred_store, ensure_predictions_for_round_store
 from core.mini import nm_drift_unique
 
 # =========================
@@ -70,28 +70,22 @@ def save_status(s):
         pass
 
 status = load_status()
+pred_store = load_pred_store()
 
 # ------------------------------------------------------------
 # Build pages (fixed by miru_status.json)
 # ------------------------------------------------------------
 def ensure_predictions_for_round(game: str, round_no: int, base_last: str, base_trends: dict, base_pred_func) -> list[str]:
-    preds_by_round = status["games"][game]["preds_by_round"]
-    key = str(round_no)
-    if key in preds_by_round and isinstance(preds_by_round[key], list) and len(preds_by_round[key]) > 0:
-        return preds_by_round[key]
+    def _gen():
+        return base_pred_func(base_last, base_trends)
 
-    preds = base_pred_func(base_last, base_trends)
-    preds_by_round[key] = preds
-
-    limit = int(status["games"][game].get("history_limit", 120))
-    if len(preds_by_round) > limit:
-        ks = sorted((int(k) for k in preds_by_round.keys()), reverse=True)
-        keep = set(str(k) for k in ks[:limit])
-        for k in list(preds_by_round.keys()):
-            if k not in keep:
-                preds_by_round.pop(k, None)
-
-    return preds
+    return ensure_predictions_for_round_store(
+        pred_store,
+        game,
+        round_no,
+        _gen,
+        history_limit=int(pred_store["games"].get(game, {}).get("history_limit", 120))
+    )
 
 def build_pages_for_game(game: str, items: list, months_used: list[int]) -> dict:
     # ---- ここから修正（items正規化）----
@@ -132,7 +126,7 @@ def build_pages_for_game(game: str, items: list, months_used: list[int]) -> dict
     has_round_int = any(isinstance(x.get("round"), int) for x in norm_items)
     if not has_round_int:
         # statusに過去roundがあればそれを起点に
-        preds_by_round = status["games"].get(game, {}).get("preds_by_round", {})
+        preds_by_round = pred_store["games"].get(game, {}).get("preds_by_round", {})
         existing = []
         for k in preds_by_round.keys():
             if str(k).isdigit():
@@ -244,6 +238,7 @@ for p in n3_pages:
 
 kc_preds = kc_random_10()
 
+save_pred_store(pred_store)
 save_status(status)
 
 data_for_js = {
