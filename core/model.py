@@ -4,9 +4,8 @@ from collections import Counter
 import json
 import os
 from datetime import datetime
-
 from core.config import INDEX_MAP, WINDMILL_MAP, GRAVITY_SECTORS, ANTI_GRAVITY_SECTORS, JST
-
+from core.backup import backup_preds_daily
 # ------------------------------------------------------------
 # Core logic
 # ------------------------------------------------------------
@@ -220,6 +219,10 @@ def save_pred_store(store, path: str = PRED_FILE):
     try:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(store, f, ensure_ascii=False, indent=2)
+
+        # 🔒 数字だけ日次バックアップ（1日1回）
+        backup_preds_daily()
+
     except Exception:
         pass
 
