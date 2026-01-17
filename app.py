@@ -556,7 +556,7 @@ html_code = f"""
     }}
 
     function changeCount(v){{ curC=Math.max(1,Math.min(10,curC+v)); update(); }}
-    function setG(g){{ curG=g; if(!pagesByGame[curG]) pagesByGame[curG]=[{{mode:'NOW',round:0,date:'',result:'',payout:{{}},preds:Array(10).fill('COMING SOON')}}]; cursor[curG]=0; update(); }}
+    function setG(g){{ curG=g; if(!pagesByGame[curG]) pagesByGame[curG]=[{{mode:'NOW',round:0,date:'',result:'',payout:{{}},preds:Array(10).fill('COMING SOON')}}]; update(); }}
     function navBack(){{ const arr=pagesByGame[curG]||[]; cursor[curG]=Math.min((cursor[curG]||0)+1, Math.max(0,arr.length-1)); update(); }}
     function navNext(){{ cursor[curG]=Math.max((cursor[curG]||0)-1,0); update(); }}
     function navNow(){{ cursor[curG]=0; update(); }}
