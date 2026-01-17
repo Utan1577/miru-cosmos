@@ -300,9 +300,9 @@ html_code = f"""
       line-height:1.15;
       white-space:nowrap;
     }}
-    .payout-k {{ width:42px; text-align:left; flex:0 0 auto; }}
-    .payout-v {{ flex:1 1 auto; text-align:right; font-variant-numeric: tabular-nums; letter-spacing:0.2px; }}
-
+    .payout-k {{ width:92px; text-align:left; flex:0 0 auto; }}
+    .payout-v {{ flex:1 1 auto; text-align:right; font-variant-numeric: tabular-nums; letter-spacing:0.2px; padding-right:6px; }}
+    
     .legend {{
       position:absolute;
       right:10px;
@@ -447,41 +447,41 @@ html_code = f"""
 
     function renderResultPanel(page){{
       if(!page) return "";
-      const rno=page.round||0;
-      const dt=page.date||"";
       const res=page.result||"";
       const pay=page.payout||{{}};
 
       let h="";
-      h+=`<div class="result-line">第${{escHtml(rno)}}回</div>`;
-      if(dt) h+=`<div class="result-line">${{escHtml(dt)}}</div>`;
 
+      // 当せん番号（左半分の中央）
       if(res) {{
         h+=`<div class="result-spacer"></div>`;
+        h+=`<div style="text-align:center;">`;
         h+=`<div class="result-line">当せん番号</div>`;
-        h+=`<div class="result-win">${{escHtml(res)}}</div>`;
+        // 適度に大きく・太く（レイアウトは変えない）
+        h+=`<div class="result-win" style="font-size:18px;font-weight:900;">${{escHtml(res)}}</div>`;
+        h+=`</div>`;
       }}
 
       h+=`<div class="result-spacer"></div>`;
 
-      if(curG==='NM'){{
+      // 当せん金（表示名だけ変更）
+      if(curG==='NM') {{
         const miniY=payoutYen(pay,"MINI") || payoutYen(pay,"Mini") || payoutYen(pay,"ミニ") || payoutYen(pay,"STR");
-        h+=`<div class="payout-row"><span class="payout-k">Mini</span><span class="payout-v">${{escHtml(miniY)}}</span></div>`;
-        return h;
+        h+=`<div class="payout-row"><span class="payout-k">ミニ</span><span class="payout-v">${{escHtml(miniY)}}</span></div>`;
+      }} else {{
+        const strY=payoutYen(pay,"STR");
+        const boxY=payoutYen(pay,"BOX");
+        const ssY=payoutYen(pay,"SET-S");
+        const sbY=payoutYen(pay,"SET-B");
+        if(strY) h+=`<div class="payout-row"><span class="payout-k">ストレート</span><span class="payout-v">${{escHtml(strY)}}</span></div>`;
+        if(boxY) h+=`<div class="payout-row"><span class="payout-k">ボックス</span><span class="payout-v">${{escHtml(boxY)}}</span></div>`;
+        if(ssY)  h+=`<div class="payout-row"><span class="payout-k">Set-ストレート</span><span class="payout-v">${{escHtml(ssY)}}</span></div>`;
+        if(sbY)  h+=`<div class="payout-row"><span class="payout-k">Set-ボックス</span><span class="payout-v">${{escHtml(sbY)}}</span></div>`;
       }}
 
-      const strY=payoutYen(pay,"STR");
-      const boxY=payoutYen(pay,"BOX");
-      const ssY=payoutYen(pay,"SET-S");
-      const sbY=payoutYen(pay,"SET-B");
-      if(strY) h+=`<div class="payout-row"><span class="payout-k">STR</span><span class="payout-v">${{escHtml(strY)}}</span></div>`;
-      if(boxY) h+=`<div class="payout-row"><span class="payout-k">BOX</span><span class="payout-v">${{escHtml(boxY)}}</span></div>`;
-      if(ssY)  h+=`<div class="payout-row"><span class="payout-k">S-S</span><span class="payout-v">${{escHtml(ssY)}}</span></div>`;
-      if(sbY)  h+=`<div class="payout-row"><span class="payout-k">S-B</span><span class="payout-v">${{escHtml(sbY)}}</span></div>`;
+      // 右下凡例（消さない）
+      h+=`<div class="legend">🟥BX&nbsp;&nbsp;🟦STR</div>`;
 
-      if(curG==='N4' || curG==='N3'){{
-        h+=`<div class="legend">🟥BX&nbsp;&nbsp;🟦STR</div>`;
-      }}
       return h;
     }}
 
@@ -568,10 +568,14 @@ html_code = f"""
         document.getElementById('game-label').innerText =
           '第' + String(page.round) + '回 予想';
       }} else {{
+        // 2026/01/16　第6899回　結果／予想結果
+        const dt = page.date || '';
+        const rno = page.round || 0;
+        document.getElementById('game-label').innerText =
+          (dt ? (dt + '　') : '') + '第' + String(rno) + '回　結果／予想結果';
+
         document.getElementById('result-box').innerHTML=renderResultPanel(page);
       }}
-      document.getElementById('preds-box').innerHTML=renderPredPanel(page);
-    }}
 
     function changeCount(v){{ curC=Math.max(1,Math.min(10,curC+v)); update(); }}
     function setG(g){{
