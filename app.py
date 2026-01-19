@@ -581,12 +581,12 @@ html_code = f"""
       if(mode==='NOW') {{
         if(curG==='KC') return `着せ替えクーちゃん　予想`;
         if(curG==='NM') return `Numbers mini　予想`;
-        return `Numbers ${curG==='N4'?4:3}　予想`;
+        return 'Numbers ' + (curG==='N4'?4:3) + '　予想';
       }}
       // RESULT/BACK view
       const gname = (curG==='KC') ? '着せ替えクーちゃん' : (curG==='NM' ? 'Numbers mini' : (curG==='N4' ? 'Numbers 4' : 'Numbers 3'));
       const d = date ? `${{date}}　` : '';
-      return `${{d}}第${{r}}回　結果／予想結果`;
+      return d + '第' + r + '回　結果／予想結果';
     }}
 
     function applyModeClass(page){{
