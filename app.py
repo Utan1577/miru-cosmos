@@ -459,6 +459,12 @@ html_code = f"""
       font-size: 16px !important;
     }}
 
+    .lcd:not(.mode-now) .kc-font {{
+      font-size: 14px !important;
+      letter-spacing: 0.05em !important;
+      line-height: 1.2;
+    }}
+   
     .red {{ color:#ff3b30; }}
     .blue {{ color:#007aff; }}
     
