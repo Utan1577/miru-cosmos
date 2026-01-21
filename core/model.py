@@ -192,7 +192,7 @@ def generate_predictions(game: str, last_val: str, trends: dict) -> list[str]:
 
         raw_preds.append("".join(str(x) for x in out_digits))
 
-    return _matrix_crossover(raw_preds)
+    return raw_preds[:10]
 
 # =========================
 # Distill (BOX特化：素材10本をそのまま確定→シャッフル)
