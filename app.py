@@ -280,11 +280,11 @@ results_cache = load_results_cache()
 
 # N4
 if should_fetch_after_20(results_cache, "N4"):
-    n4_items_fresh, _ = fetch_last_n_results("N4", need=120)
+    n4_items_fresh, _ = fetch_last_n_results("N4"200)
     cache_items_by_round(results_cache, "N4", n4_items_fresh)
     save_results_cache(results_cache)
 
-n4_items = cached_items(results_cache, "N4", limit=40)
+n4_items = cached_items(results_cache, "N4", limit=50)
 
 # N3
 if should_fetch_after_20(results_cache, "N3"):
