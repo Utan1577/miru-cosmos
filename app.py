@@ -341,7 +341,7 @@ for d in target_dates:
 missing_dates = set(d for d in target_dates if d not in kc_by_date)
 
 # results_cache は上で作ってるので流用（20時以降の判定）
-if missing_dates and should_fetch_after_20(results_cache, "N4"):
+if missing_dates and (should_fetch_after_20(results_cache, "N4") or len(kc_cache.get("by_date", {})) == 0):
     got_map = moneyplan_build_date_map(missing_dates, max_scan=200)
     # got_map: date -> {"date","result","payout"} の想定
     for dt, it in got_map.items():
