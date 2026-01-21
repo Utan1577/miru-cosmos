@@ -140,7 +140,7 @@ def _fetch_last_n_results_fallback(game: str, need: int = 20):
                     m_date = DATE_RE.search(b)
                     date_str = ""
                     if m_date:
-                        y,, mo, d = int(m_date.group(1)), int(m_date.group(2)), int(m_date.group(3))
+                        y, mo, d = int(m_date.group(1)), int(m_date.group(2)), int(m_date.group(3))
                         date_str = f"{y:04d}/{mo:02d}/{d:02d}"
 
                     m_num = NUM4_RE.search(b) if digits == 4 else NUM3_RE.search(b)
