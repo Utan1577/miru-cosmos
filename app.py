@@ -763,7 +763,7 @@ html_code = f"""
 
       if(curG==='NM') {{
         const miniY = payoutYen(pay,"ミニ") || payoutYen(pay,"MINI") || payoutYen(pay,"Mini") || "";
-        if(miniY) return `ミニ　　　 ${escHtml(miniY)}円`;
+        + if(miniY) return "ミニ　　　 " + escHtml(miniY) + "円";
         return "";
       }}
 
