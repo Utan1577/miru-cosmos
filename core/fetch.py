@@ -2,8 +2,9 @@ import requests
 import re
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+from datetime import datetime
 
-from core.config import HEADERS
+from core.config import HEADERS, JST
 
 ROUND_RE = re.compile(r"(?:回号\s*)?第(\d+)回")
 DATE_RE  = re.compile(r"(\d{4})/(\d{1,2})/(\d{1,2})")
@@ -12,40 +13,91 @@ NUM_RE_3 = re.compile(r"当せん番号\s*([0-9]{3})")
 
 YEN_RE = re.compile(r"([0-9][0-9,]*)円")
 
+
 def _strip_pua(s: str) -> str:
     # 私用領域（Termius等で混ざる “” 系）を除去
     return re.sub(r"[\uf000-\uf8ff]", "", s)
 
+
+def _normalize_date(y, m, d) -> str:
+    return f"{int(y):04d}/{int(m):02d}/{int(d):02d}"
+
+
+def _month_list_back(n_months: int = 36) -> list[tuple[int, int]]:
+    """
+    JST基準で、当月から過去n_months分の (YYYY,MM) を返す。
+    """
+    now = datetime.now(JST)
+    y = now.year
+    m = now.month
+    out = []
+    for _ in range(n_months):
+        out.append((y, m))
+        m -= 1
+        if m <= 0:
+            m = 12
+            y -= 1
+    return out
+
+
 def get_month_urls(past_url: str) -> list[str]:
+    """
+    楽天backnumberは月選択が <select><option value="..."> になっていることがある。
+    なので a[href] だけでは足りない場合がある。
+
+    1) a[href] から候補収集
+    2) option[value] から候補収集
+    3) それでも少ない場合は、過去36ヶ月分のURLを自動生成して追加
+    """
     r = requests.get(past_url, headers=HEADERS, timeout=20)
     r.raise_for_status()
     r.encoding = r.apparent_encoding
     soup = BeautifulSoup(r.text, "html.parser")
 
-    urls = []
+    candidates = []
+
+    # 1) <a href>
     for a in soup.find_all("a"):
         href = a.get("href", "")
         if not href:
             continue
         u = urljoin(past_url, href)
-        # backnumber配下だけを優先
-        if "/backnumber/" in u and ("numbers4" in u or "numbers3" in u):
-            urls.append(u)
+        if ("numbers4" in u or "numbers3" in u) and ("backnumber" in u):
+            candidates.append(u)
 
+    # 2) <option value>
+    for opt in soup.find_all("option"):
+        val = opt.get("value", "")
+        if not val:
+            continue
+        u = urljoin(past_url, val)
+        if ("numbers4" in u or "numbers3" in u) and ("backnumber" in u):
+            candidates.append(u)
+
+    # 3) 最低限、トップも含める
+    candidates.append(past_url)
+
+    # 重複排除
     out = []
     seen = set()
-    for u in urls:
+    for u in candidates:
         if u not in seen:
             seen.add(u)
             out.append(u)
 
-    # 取れない場合はトップだけ
-    if not out:
-        out = [past_url]
+    # 4) まだ少ないならURL自動生成（推定パス）
+    # 例: https://takarakuji.rakuten.co.jp/backnumber/numbers4/2026/01/
+    if len(out) < 6:
+        is_n4 = "numbers4" in past_url
+        base = "https://takarakuji.rakuten.co.jp/backnumber/numbers4/" if is_n4 else "https://takarakuji.rakuten.co.jp/backnumber/numbers3/"
+        for (yy, mm) in _month_list_back(36):
+            u = f"{base}{yy:04d}/{mm:02d}/"
+            if u not in seen:
+                seen.add(u)
+                out.append(u)
+
     return out
 
-def _normalize_date(y, m, d) -> str:
-    return f"{int(y):04d}/{int(m):02d}/{int(d):02d}"
 
 def _scan_payout_lines(lines: list[str], digits: int) -> dict:
     """
@@ -55,7 +107,6 @@ def _scan_payout_lines(lines: list[str], digits: int) -> dict:
     """
     payout = {}
 
-    # ラベルの正規化（スペース除去）
     def norm_label(s: str) -> str:
         s = _strip_pua(s)
         s = s.replace(" ", "").replace("\u3000", "")
@@ -76,7 +127,6 @@ def _scan_payout_lines(lines: list[str], digits: int) -> dict:
         for jp, key in labels:
             if lab == jp:
                 yen = ""
-                # 次の6行以内で最初の “円”
                 for j in range(i + 1, min(n, i + 7)):
                     t = norm_label(lines[j])
                     m = YEN_RE.search(t)
@@ -89,6 +139,7 @@ def _scan_payout_lines(lines: list[str], digits: int) -> dict:
 
     return payout
 
+
 def parse_month_page(url: str, digits: int) -> list[dict]:
     r = requests.get(url, headers=HEADERS, timeout=20)
     r.raise_for_status()
@@ -98,7 +149,6 @@ def parse_month_page(url: str, digits: int) -> list[dict]:
     text = soup.get_text("\n", strip=True)
     text = _strip_pua(text)
 
-    # 回号ごとにブロック分割
     parts = re.split(r"(?:回号\s*)?(第\d+回)", text)
     blocks = []
     cur = ""
@@ -141,6 +191,7 @@ def parse_month_page(url: str, digits: int) -> list[dict]:
 
     items.sort(key=lambda x: x.get("round", 0), reverse=True)
     return items
+
 
 def fetch_last_n_results(game: str, need: int = 20):
     if game == "N4":
