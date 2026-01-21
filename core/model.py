@@ -8,13 +8,18 @@ from datetime import datetime
 from core.config import INDEX_MAP, WINDMILL_MAP, GRAVITY_SECTORS, ANTI_GRAVITY_SECTORS, PRED_FILE, JST, safe_save_json
 from core.shuffle import shuffle_recompose
 
+# ============================================================
+# VERSION（ここだけ変えると “アップデートで全部変わる”）
+# ============================================================
+VERSION = "v2026-01-22a"
+
 KC_FRUIT_MAP = {
     "0": "🍎", "1": "🍊", "2": "🍈", "3": "🍇", "4": "🍑",
     "5": "🍎", "6": "🍊", "7": "🍈", "8": "🍇", "9": "🍑"
 }
 
 # =========================
-# Prediction Store
+# Prediction Store（今回は使っても使わなくてもOK）
 # =========================
 def default_pred_store():
     return {
@@ -79,27 +84,34 @@ def _get_sectors(obj, col: str):
         return list(obj)
     return []
 
-def apply_gravity_final(col: str, idx: int, role: str) -> int:
+def apply_gravity_final(col: str, idx: int, role: str, rng: random.Random) -> int:
+    """
+    重要：グローバル random を使わず rng を使う（再起動固定のため）
+    """
     if role == "ace":
         sectors = _get_sectors(GRAVITY_SECTORS, col)
         if sectors:
             if idx in sectors:
                 return idx
-            if random.random() < 0.7:
-                return random.choice(sectors)
+            if rng.random() < 0.7:
+                return rng.choice(sectors)
     elif role == "shift":
         sectors = _get_sectors(ANTI_GRAVITY_SECTORS, col)
         if sectors:
             if idx in sectors:
                 return idx
-            if random.random() < 0.7:
-                return random.choice(sectors)
+            if rng.random() < 0.7:
+                return rng.choice(sectors)
     return idx
 
 # =========================
-# Raw generator
+# Raw generator helpers
 # =========================
 def _matrix_crossover(raw_preds: list[str]) -> list[str]:
+    """
+    旧：圧縮が強すぎて素材が潰れることがあったため、
+    現運用では generate_predictions() からは呼ばない（残しておくだけ）。
+    """
     if not raw_preds:
         return []
 
@@ -155,13 +167,35 @@ def _matrix_crossover(raw_preds: list[str]) -> list[str]:
 
     return out[:10]
 
+def _stable_seed(game: str, last_val: str, trends: dict) -> int:
+    """
+    再起動固定用の seed
+    - VERSION を変えればアップデートで全予想が変わる
+    - last_val/trends が同じなら再起動しても同じ
+    """
+    # trends は順序が安定するように key で並べる
+    t_items = sorted((str(k), str(v)) for k, v in (trends or {}).items())
+    s = VERSION + "|" + game + "|" + str(last_val) + "|" + str(t_items)
+    h = 2166136261
+    for ch in s:
+        h ^= ord(ch)
+        h = (h * 16777619) & 0xFFFFFFFF
+    return h
+
 def generate_predictions(game: str, last_val: str, trends: dict) -> list[str]:
+    """
+    - raw_preds をそのまま10本返す（惜しい世界線維持）
+    - 乱数は rng=Random(seed) に固定（再起動で変わらない）
+    """
     digits = 4 if game == "N4" else 3
     cols = ["n1", "n2", "n3", "n4"] if digits == 4 else ["n1", "n2", "n3"]
 
-    last = [int(x) for x in str(last_val)]
+    # 決定論乱数
+    rng = random.Random(_stable_seed(game, last_val, trends))
+
+    last = [int(x) for x in str(last_val) if str(x).isdigit()]
     if len(last) != digits:
-        last = [random.randint(0, 9) for _ in range(digits)]
+        last = [rng.randint(0, 9) for _ in range(digits)]
 
     roles = ["ace", "ace", "ace", "shift", "shift", "chaos", "chaos", "ace", "shift", "ace", "chaos", "shift"]
     raw_preds = []
@@ -171,31 +205,32 @@ def generate_predictions(game: str, last_val: str, trends: dict) -> list[str]:
         for i, col in enumerate(cols):
             curr_digit = last[i]
             curr_idx = INDEX_MAP[col][curr_digit]
-            base_spin = int(trends.get(col, 0))
+            base_spin = int(trends.get(col, 0)) if isinstance(trends, dict) else 0
 
             jitter = 0
             if attempt >= 6:
-                jitter = random.choice([-2, -1, 0, 1, 2])
+                jitter = rng.choice([-2, -1, 0, 1, 2])
 
             spin = base_spin
             if role == "chaos":
-                spin = random.randint(-5, 5)
+                spin = rng.randint(-5, 5)
             elif role == "shift":
-                spin = base_spin + random.choice([-1, 1, 5, -5])
+                spin = base_spin + rng.choice([-1, 1, 5, -5])
             else:
-                if random.random() < 0.25:
-                    spin = base_spin + random.choice([-1, 1])
+                if rng.random() < 0.25:
+                    spin = base_spin + rng.choice([-1, 1])
 
             next_idx = (curr_idx + spin + jitter) % 10
-            next_idx = apply_gravity_final(col, next_idx, role)
+            next_idx = apply_gravity_final(col, next_idx, role, rng)
             out_digits.append(WINDMILL_MAP[col][next_idx])
 
         raw_preds.append("".join(str(x) for x in out_digits))
 
+    # ここが「惜しい世界線」に戻した核心：圧縮しない
     return raw_preds[:10]
 
 # =========================
-# Distill (BOX特化：素材10本をそのまま確定→シャッフル)
+# Distill（BOX特化：素材10本をそのまま確定→シャッフル）
 # =========================
 def distill_predictions(game: str, raw_preds: list[str], out_n: int = 10) -> list[str]:
     if not raw_preds:
@@ -209,7 +244,7 @@ def distill_predictions(game: str, raw_preds: list[str], out_n: int = 10) -> lis
             out.append(raw_preds[-1])
         return out
 
-    # sanitize + keep material (including duplicates)
+    # sanitize + keep material
     material = []
     for s in raw_preds:
         s = "".join(ch for ch in str(s) if ch.isdigit())
@@ -223,7 +258,7 @@ def distill_predictions(game: str, raw_preds: list[str], out_n: int = 10) -> lis
     while len(out) < out_n:
         out.append(out[-1])
 
-    # ★ここが今回の核心：素材は捨てず、配置だけ変える
+    # ★配置だけ変える（BOX特化）
     out = shuffle_recompose(game, out)
 
     return out[:out_n]
