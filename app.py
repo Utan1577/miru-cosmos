@@ -6,6 +6,7 @@ import re
 from datetime import datetime
 from bs4 import BeautifulSoup
 import streamlit.components.v1 as components
+from core.cache import load_results_cache, save_results_cache, cached_items, cache_items_by_round, should_fetch_after_20
 
 from core.config import STATUS_FILE, JST, HEADERS, safe_save_json
 from core.fetch import fetch_last_n_results
@@ -273,10 +274,26 @@ def moneyplan_build_date_map(target_dates: set[str], max_scan: int = 400):
         rno -= 1
     return out
 
-# ---------- Fetch + Build ----------
-n4_items, _ = fetch_last_n_results("N4", need=40)
-n3_items, _ = fetch_last_n_results("N3", need=40)
+# ---------- Fetch + Build (CACHE FIRST) ----------
+results_cache = load_results_cache()
 
+# N4
+if should_fetch_after_20(results_cache, "N4"):
+    n4_items_fresh, _ = fetch_last_n_results("N4", need=120)
+    cache_items_by_round(results_cache, "N4", n4_items_fresh)
+    save_results_cache(results_cache)
+
+n4_items = cached_items(results_cache, "N4", limit=40)
+
+# N3
+if should_fetch_after_20(results_cache, "N3"):
+    n3_items_fresh, _ = fetch_last_n_results("N3", need=120)
+    cache_items_by_round(results_cache, "N3", n3_items_fresh)
+    save_results_cache(results_cache)
+
+n3_items = cached_items(results_cache, "N3", limit=40)
+
+# build pages (UIは従来どおり)
 n4_pages = build_numbers_pages("N4", n4_items)
 n3_pages = build_numbers_pages("N3", n3_items)
 
