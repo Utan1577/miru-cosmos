@@ -224,7 +224,7 @@ def distill_predictions(game: str, raw_preds: list[str], out_n: int = 10) -> lis
         out.append(out[-1])
 
     # ★ここが今回の核心：素材は捨てず、配置だけ変える
-    # out = shuffle_recompose(game, out)
+    out = shuffle_recompose(game, out)
 
     return out[:out_n]
 
