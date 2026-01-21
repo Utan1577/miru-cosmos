@@ -7,6 +7,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import streamlit.components.v1 as components
 from core.cache import load_results_cache, save_results_cache, cached_items, cache_items_by_round, should_fetch_after_20
+from core.cache import load_kc_cache, save_kc_cache, kc_get, kc_put
 
 from core.config import STATUS_FILE, JST, HEADERS, safe_save_json
 from core.fetch import fetch_last_n_results
@@ -325,8 +326,34 @@ for p in n4_pages:
         d = norm_date(p.get("date",""))
         if d:
             target_dates.add(d)
-kc_by_date = moneyplan_build_date_map(target_dates, max_scan=400)
 
+# --- KC CACHE FIRST ---
+kc_cache = load_kc_cache()
+kc_by_date = {}
+
+# まずキャッシュから埋める
+for d in target_dates:
+    v = kc_get(kc_cache, d)
+    if v:
+        kc_by_date[d] = v
+
+# 20時以降で、キャッシュに無い日付だけ取得して追記（不足分のみ）
+missing_dates = set(d for d in target_dates if d not in kc_by_date)
+
+# results_cache は上で作ってるので流用（20時以降の判定）
+if missing_dates and should_fetch_after_20(results_cache, "N4"):
+    got_map = moneyplan_build_date_map(missing_dates, max_scan=200)
+    # got_map: date -> {"date","result","payout"} の想定
+    for dt, it in got_map.items():
+        if not it:
+            continue
+        res = it.get("result", "")
+        pay = it.get("payout", {}) or {}
+        if dt and res:
+            kc_put(kc_cache, dt, res, pay)
+            kc_by_date[dt] = {"result": res, "payout": pay}
+
+    save_kc_cache(kc_cache)
 kc_pages = []
 kc_pages.append({
     "mode": "NOW",
