@@ -456,7 +456,7 @@ html_code = f"""
     .kc-font {{
       font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
       letter-spacing: 0.1em !important; 
-      font-size: 16px !important;
+      font-size: 14px !important;
     }}
 
     .red {{ color:#ff3b30; }}
